@@ -1,0 +1,1 @@
+.\env\Scripts\python .\src\build-cx-freeze.py build

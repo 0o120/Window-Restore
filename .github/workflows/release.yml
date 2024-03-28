@@ -1,0 +1,35 @@
+name: "Build and Release"
+permissions:
+  id-token: "write"
+  contents: "write"
+  packages: "write"
+  pull-requests: "read"
+on:
+  push:
+    branches:
+      - "master"
+jobs:
+  release:
+    name: "Release"
+    runs-on: "windows-latest"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.11
+      - name: "Building .exe"
+        run: |
+          .\build.bat
+      - name: "Exporting APP_NAME and APP_VERSION to GITHUB_ENV"
+        run: |
+          cd src
+          python -c "from config import APP_NAME; print('APP_NAME='+APP_NAME)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          python -c "from config import APP_VERSION; print('APP_VERSION='+APP_VERSION)" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "v${{ env.APP_VERSION }}"
+          prerelease: false
+          title: "v${{ env.APP_VERSION }} - ${{ env.APP_NAME }}"
+          files: |
+            ./build/release/
